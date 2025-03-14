@@ -13,7 +13,7 @@ footer_text: >
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
 keywords: HPC, AI, ML, gpus, scaling, llms, transformers, parallelism, profiling, performance # add your own keywords or leave empty
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
-icon: favicon # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
+icon: favicon.png # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
 url: https://tomaslaz.github.io # the base hostname & protocol for your site
 baseurl: /scaleops # the subpath of your site, e.g. /blog/. Leave blank for root
@@ -197,7 +197,7 @@ keep_files:
 
 # Plug-ins
 plugins:
-  - jekyll-archives-v2
+  - jekyll-archives
   - jekyll-email-protect
   - jekyll-feed
   - jekyll-get-json
