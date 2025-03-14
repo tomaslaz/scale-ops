@@ -1,1 +1,1 @@
-User-agent: * Disallow: Sitemap: https://tomaslaz.github.io/scale-ops/sitemap.xml
+User-agent: * Disallow: Sitemap: https://tomaslaz.github.io/scale-ops//sitemap.xml
