@@ -64,6 +64,6 @@ I hope that this repository will be a useful resource for anyone who is learning
 
 **Networking**
 
-* [**Networking Part 1**](net_1) This post examines the impact of GPU networking on transformer model training performance using Distributed Data Parallel (DDP), comparing high-speed intra-node NVLink with slower inter-node InfiniBand.
+- [**Networking Part 1**](net_1) This post examines the impact of GPU networking on transformer model training performance using Distributed Data Parallel (DDP), comparing high-speed intra-node NVLink with slower inter-node InfiniBand.
 
-* [**Networking Part 2**](net_2). Part 2 builds on earlier experiments by examining how distributing 4 GPUs across 1, 2, and 4 nodes impacts transformer model training, with a focus on network topology and NIC sharing.
+- [**Networking Part 2**](net_2). Part 2 builds on earlier experiments by examining how distributing 4 GPUs across 1, 2, and 4 nodes impacts transformer model training, with a focus on network topology and NIC sharing.

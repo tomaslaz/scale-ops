@@ -63,23 +63,23 @@ To begin, I ran a series of experiments using 4 GPUs distributed across 1, 2, an
 
 ### GPT-2 Large Experiments
 
-| Experiment | Model | Parallelism | Nodes | GPUs per Node | Epoch 2 time (s) |
-| --- | --- | --- | --- | --- | --- |
-| e-15-7-5 | gpt2-large | DDP | 1 | 4 | 135.42 |
-| e-15-8-5 | gpt2-large | DDP | 2 | 2 | 895.85 |
-| e-15-9-4 | gpt2-large | DDP | 4 | 1 | 251.68 |
+| Experiment | Model      | Parallelism | Nodes | GPUs per Node | Epoch 2 time (s) |
+| ---------- | ---------- | ----------- | ----- | ------------- | ---------------- |
+| e-15-7-5   | gpt2-large | DDP         | 1     | 4             | 135.42           |
+| e-15-8-5   | gpt2-large | DDP         | 2     | 2             | 895.85           |
+| e-15-9-4   | gpt2-large | DDP         | 4     | 1             | 251.68           |
 
 These results not only contradict H1 and H2 from Part 1—since the training times between `e-15-7-5` and `e-15-9-4` are almost double—but also show that intermediate configurations, such as `e-15-8-5` (2-node, 2-GPU-per-node), exhibit significantly slower training times compared to both `e-15-7-5` and `e-15-9-4`.
 
-To ensure that these results are not anomalies, I reused the same Python [script](../Scripts/1_networking/bench_allreduce.py) from Part 1 to benchmark the performance of the all-reduce operation in a distributed PyTorch environment. As before, the script uses 700M parameters (GPT-2 Large) in BF16 precision (1.32 GB) and measures the transfer speed of the all-reduce operation between GPUs. The results are as follows:
+To ensure that these results are not anomalies, I reused the same Python [script](../assets/scripts/bench_allreduce.py) from Part 1 to benchmark the performance of the all-reduce operation in a distributed PyTorch environment. As before, the script uses 700M parameters (GPT-2 Large) in BF16 precision (1.32 GB) and measures the transfer speed of the all-reduce operation between GPUs. The results are as follows:
 
 | Experiment | Nodes | GPUs per Node | Measured Transfer speed (GB/s) | Time (s) |
-| --- | --- | --- | --- | --- |
-| e-16-4-1 | 1 | 4 | 875.1 | 0.009 |
-| e-16-4-4 | 2 | 2 |  25.6 | 0.309 |
-| e-16-4-3 | 1 | 4 |  50.0 | 0.158 |
+| ---------- | ----- | ------------- | ------------------------------ | -------- |
+| e-16-4-1   | 1     | 4             | 875.1                          | 0.009    |
+| e-16-4-4   | 2     | 2             | 25.6                           | 0.309    |
+| e-16-4-3   | 4     | 1             | 50.0                           | 0.158    |
 
-*Note: The total data transferred per experiment in Table 2 is around 7.9 GB—that is, 1.32 GB transferred back and forth three times (N - 1).*
+_Note: The total data transferred per experiment in Table 2 is around 7.9 GB—that is, 1.32 GB transferred back and forth three times (N - 1)._
 
 ---
 
@@ -87,7 +87,7 @@ To ensure that these results are not anomalies, I reused the same Python [script
 
 ---
 
-This is somewhat counterintuitive, as one might expect that the transfer speed between 2 nodes with 2 GPUs per node would be faster than that between 4 nodes with 1 GPU per node, given that intra-node communication is clearly faster than inter-node communication. Thus, having fewer nodes should be more efficient. However, the results show that this is not the case. 
+This is somewhat counterintuitive, as one might expect that the transfer speed between 2 nodes with 2 GPUs per node would be faster than that between 4 nodes with 1 GPU per node, given that intra-node communication is clearly faster than inter-node communication. Thus, having fewer nodes should be more efficient. However, the results show that this is not the case.
 
 Let's try to understand why this is happening by starting with some communication basics for distributed training.
 
@@ -129,11 +129,11 @@ Rank 1   Rank 2
          Rank 3
 ```
 
-### Double binary tree 
+### Double binary tree
 
-This enhanced topology uses two distinct binary trees — one for scattering (broadcast) and one for gathering (reduction) — to optimize bandwidth utilization. 
+This enhanced topology uses two distinct binary trees — one for scattering (broadcast) and one for gathering (reduction) — to optimize bandwidth utilization.
 
-In this setup, one tree manages the reduction phase by aggregating data from all ranks into a single root (the "up" tree), while the other handles the broadcasting phase by distributing the aggregated result back to all ranks (the "down" tree). 
+In this setup, one tree manages the reduction phase by aggregating data from all ranks into a single root (the "up" tree), while the other handles the broadcasting phase by distributing the aggregated result back to all ranks (the "down" tree).
 
 The reduction tree is identified by its final node having no children, as it collects data from every node, whereas the broadcast tree starts at a top node without a parent, initiating the dissemination process.
 
@@ -154,6 +154,7 @@ The logs for the tree topology are given in the following format:
 ```
 Trees P1/P2/P3->R->C
 ```
+
 where P is the parent(s) ranks (-1 if none), R is the current rank, and C is the child's rank (-1 if none).
 
 In this context, parent in a reduction operation collects data from the child ranks, and in a broadcasting operation sends data to the child ranks, whereas the child does the opposite.
@@ -270,15 +271,16 @@ Tree 1: Broadcast tree
 Since the NCCL logs show that a combination of ring and tree topologies is being used in each of the experiments, it is difficult to say which topology is being used more or if the ring or tree topology is the bottleneck in the experiments. However, it is possible to set the topology manually using the `NCCL_ALGO` environment variable by setting it to `RING` or `TREE` to force the use of the ring or tree topology respectively and compare the results.
 
 | Experiment | Nodes | GPUs per Node | Topology | Measured Transfer speed (GB/s) | Time (s) |
-| --- | --- | --- | --- | --- | --- |
-| e-16-5-1-r | 1 | 4 | Ring | 922.4 | 0.009 |
-| e-16-5-1-t | 1 | 4 | Tree | 606.6 | 0.013 |
-| e-16-5-2-r | 2 | 2 | Ring |  13.5 | 0.584 |
-| e-16-5-2-t | 2 | 2 | Tree |  25.6 | 0.309 |
-| e-16-5-3-r | 1 | 4 | Ring |  53.9 | 0.158 |
-| e-16-5-3-t | 1 | 4 | Tree |  45.0 | 0.158 |
+| ---------- | ----- | ------------- | -------- | ------------------------------ | -------- |
+| e-16-5-1-r | 1     | 4             | Ring     | 922.4                          | 0.009    |
+| e-16-5-1-t | 1     | 4             | Tree     | 606.6                          | 0.013    |
+| e-16-5-2-r | 2     | 2             | Ring     | 13.5                           | 0.584    |
+| e-16-5-2-t | 2     | 2             | Tree     | 25.6                           | 0.309    |
+| e-16-5-3-r | 4     | 1             | Ring     | 53.9                           | 0.158    |
+| e-16-5-3-t | 4     | 1             | Tree     | 45.0                           | 0.158    |
 
 ---
+
 **Observation 2:** The results show that the ring topology is faster than the tree topology for the 1-node, 4-GPU-per-node and 4-node, 1-GPU-per-node configurations. However, the ring topology is slower than the tree topology for the 2-node, 2-GPU-per-node configuration.
 
 ---
@@ -329,9 +331,9 @@ The GPUs on 11 nodes have 80GB RAM, while those on the remaining 46 nodes have 4
 Baskerville uses three networks:
 
 - An isolated 1GbE management network (not user-accessible)
-- A 25GbE high-speed Ethernet network built using NVIDIA Mellanox Spectrum®-2 switches running NVIDIA Cumulus® Linux 
+- A 25GbE high-speed Ethernet network built using NVIDIA Mellanox Spectrum®-2 switches running NVIDIA Cumulus® Linux
 - An HDR fat-tree InfiniBand network built using NVIDIA Mellanox Quantum HDR switches (QM8790) and ConnectX-6 PCIe gen 4 adapters which provides a full 200Gb network connection
-  
+
 ### Storage
 
 The system is equipped with Lenovo DSS-G storage systems running IBM® Spectrum Scale™:

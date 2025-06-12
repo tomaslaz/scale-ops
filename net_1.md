@@ -70,7 +70,6 @@ To gain empirical insights, I conducted a series of experiments using PyTorch Li
 
 My prior experience with both training transformer-based models and running large-scale HPC simulations made me skeptical of these hypotheses. However, I wanted to test them rigorously rather than rely on intuition or anecdotal evidence.
 
-
 ## Prior Knowledge
 
 In previous work published on [Zenodo](https://zenodo.org/records/13349541), I evaluated different HPC configurations for training GPT-2 and explored various parallelism strategies. Those findings hinted that:
@@ -117,10 +116,10 @@ I first tested the smaller GPT-2 model (~85M parameters) with different node/GPU
 **Results**:
 
 | Experiment | Model | Parallelism | Nodes | GPUs per Node | Epoch 2 time (s) | Peak memory (MiB) |
-| --- | --- | --- | --- | --- | --- | --- |
-| e-15-1 | gpt2       | DDP| 1 | 1 | 157.60 |  3,687.91 |
-| e-15-2 | gpt2       | DDP| 1 | 2 |  62.96 |  3,693.55 |
-| e-15-3 | gpt2       | DDP| 2 | 1 |  62.55 |  3,696.01 |
+| ---------- | ----- | ----------- | ----- | ------------- | ---------------- | ----------------- |
+| e-15-1     | gpt2  | DDP         | 1     | 1             | 157.60           | 3,687.91          |
+| e-15-2     | gpt2  | DDP         | 1     | 2             | 62.96            | 3,693.55          |
+| e-15-3     | gpt2  | DDP         | 2     | 1             | 62.55            | 3,696.01          |
 
 **Observations**:
 
@@ -134,11 +133,11 @@ Next, I repeated the procedure with GPT-2 Large (~708M parameters):
 
 **Results**:
 
-| Experiment | Model | Parallelism | Nodes | GPUs per Node | Epoch 2 time (s) | Peak memory (MiB) |
-| --- | --- | --- | --- | --- | --- | --- |
-| e-15-4-1 | gpt2-large | DDP| 1 | 1 | 498.37 | 24,258.05 |
-| e-15-5-3 | gpt2-large | DDP| 1 | 2 | 266.83 | 24,258.38 |
-| e-15-6-2 | gpt2-large | DDP| 2 | 1 | 406.12 | 24,297.53 |
+| Experiment | Model      | Parallelism | Nodes | GPUs per Node | Epoch 2 time (s) | Peak memory (MiB) |
+| ---------- | ---------- | ----------- | ----- | ------------- | ---------------- | ----------------- |
+| e-15-4-1   | gpt2-large | DDP         | 1     | 1             | 498.37           | 24,258.05         |
+| e-15-5-3   | gpt2-large | DDP         | 1     | 2             | 266.83           | 24,258.38         |
+| e-15-6-2   | gpt2-large | DDP         | 2     | 1             | 406.12           | 24,297.53         |
 
 **Observations**:
 
@@ -149,20 +148,24 @@ Next, I repeated the procedure with GPT-2 Large (~708M parameters):
 ## Analysis
 
 For GPT-2 Large, the number of steps per epoch differs based on the number of GPUs:
+
 - Single GPU (e-15-4-1): 2,216 steps
 - Two GPUs (e-15-5-3 and e-15-6-2): 1,108 steps
 
 The theoretical peak transfer speeds are:
+
 - NVLink 3.0: 600 GB/s
 - InfiniBand HDR: 200 Gbps (25 GB/s)
 
 Model Size Calculation:
+
 - GPT-2 Large has 708 million parameters.
-- Model size in BF16 precision: 708 * 10^6 * 16 bits / 8 bits per byte = 1.416 GB
+- Model size in BF16 precision: 708 _ 10^6 _ 16 bits / 8 bits per byte = 1.416 GB
 
 Total Data Transfer per Epoch:
+
 - For 1,108 steps, and considering the all-reduce operation requires two transfers per step:
-- Total data transferred: 2 * 1.416 GB * 1,108 = 3.14 TB 
+- Total data transferred: 2 _ 1.416 GB _ 1,108 = 3.14 TB
 
 Communication Time Estimates:
 
@@ -171,45 +174,46 @@ Communication Time Estimates:
 
 Comparing to Measured Times:
 
-- Half of Single GPU Time: 498.37 s / 2 = 249.19 s. 
+- Half of Single GPU Time: 498.37 s / 2 = 249.19 s.
   - This illustrates the ideal case where the training time halves with the addition of a second GPU assuming no communication overhead.
 - Estimated Time with NVLink 3.0: 249.19 s + 5.23 s = 254.42 s
   - Align reasonably well with the observed timing in e-15-5-3: 266.83 s
 - Estimated Time with InfiniBand HDR: 249.19 s + 125.6 s = 374.79 s
-  - Align reasonably well with the observed timing in e-15-6-2: 406.12 s 
+  - Align reasonably well with the observed timing in e-15-6-2: 406.12 s
 
 Note: The discrepancies are likely due to factors like latency, network overhead, and resource contention.
 
 ## Communication Benchmark Experiments
 
-To isolate the communication overhead, I wrote a small benchmark [script](../Scripts/1_networking/bench_allreduce.py) measuring the throughput of a distributed all-reduce on 700M parameters in BF16 (~1.32 GB). The script relies on PyTorch’s collective communication (NCCL or Gloo) and reports the effective transfer speed:
+To isolate the communication overhead, I wrote a small benchmark [script](../assets/scripts/bench_allreduce.py) measuring the throughput of a distributed all-reduce on 700M parameters in BF16 (~1.32 GB). The script relies on PyTorch’s collective communication (NCCL or Gloo) and reports the effective transfer speed:
 
 **Results**:
 
-| Experiment | Nodes | GPUs per Node | Backend | Protocol | Measured Transfer speed (GB/s) | Time (s) |
-| --- | --- | --- | --- | --- | --- | --- |
-| e-16-1 | 1 | 2 | NVLink 3.0 | NCCL | 159.29 | 0.02 |
-| e-16-1 | 1 | 2 | PCIe 4.0 | NCCL | 26.90  | 0.10 |
-| e-16-2 | 2 | 1 | InfiniBand (HDR) | NCCL | 21.67 | 0.12 |
-| e-16-2 | 2 | 1 | Ethernet (25GbE) | NCCL | 3.01 | 0.88 |
-| e-16-2 | 2 | 1 | InfiniBand (HDR) | Gloo | 1.60 | 1.70 |
-| e-16-2 | 2 | 1 | Ethernet (25GbE) | Gloo | 1.60 | 1.65 |
+| Experiment | Nodes | GPUs per Node | Backend          | Protocol | Measured Transfer speed (GB/s) | Time (s) |
+| ---------- | ----- | ------------- | ---------------- | -------- | ------------------------------ | -------- |
+| e-16-1     | 1     | 2             | NVLink 3.0       | NCCL     | 159.29                         | 0.02     |
+| e-16-1     | 1     | 2             | PCIe 4.0         | NCCL     | 26.90                          | 0.10     |
+| e-16-2     | 2     | 1             | InfiniBand (HDR) | NCCL     | 21.67                          | 0.12     |
+| e-16-2     | 2     | 1             | Ethernet (25GbE) | NCCL     | 3.01                           | 0.88     |
+| e-16-2     | 2     | 1             | InfiniBand (HDR) | Gloo     | 1.60                           | 1.70     |
+| e-16-2     | 2     | 1             | Ethernet (25GbE) | Gloo     | 1.60                           | 1.65     |
 
 **Observations**:
 
 - NVLink (intra-node) throughput is orders of magnitude higher than inter-node InfiniBand.
 - Times align with the differences observed in full training experiments: communication overhead grows substantially once multiple nodes are involved and model size is large.
 
-
 ### Recalculating Training Time Differences:
 
 For e-15-5-3 (NVLink 3.0), additional time due to communication:
-- 1,108 * 0.02 s = 22.16 s
+
+- 1,108 \* 0.02 s = 22.16 s
 - Total estimated time: 249.19 s + 22.16 s = 271.35 s
 - Close to measured time: 266.83 s
 
 For e-15-6-2 (InfiniBand HDR), additional time due to communication:
-- 1,108 * 0.12 s = 132.96 s
+
+- 1,108 \* 0.12 s = 132.96 s
 - Total estimated time: 249.19 s + 132.96 s = 382.15 s
 - Close to measured time: 406.12 s
 
@@ -254,9 +258,9 @@ The GPUs on 11 nodes have 80GB RAM, while those on the remaining 46 nodes have 4
 Baskerville uses three networks:
 
 - An isolated 1GbE management network (not user-accessible)
-- A 25GbE high-speed Ethernet network built using NVIDIA Mellanox Spectrum®-2 switches running NVIDIA Cumulus® Linux 
+- A 25GbE high-speed Ethernet network built using NVIDIA Mellanox Spectrum®-2 switches running NVIDIA Cumulus® Linux
 - An HDR fat-tree InfiniBand network built using NVIDIA Mellanox Quantum HDR switches (QM8790) and ConnectX-6 PCIe gen 4 adapters which provides a full 200Gb network connection
-  
+
 ### Storage
 
 The system is equipped with Lenovo DSS-G storage systems running IBM® Spectrum Scale™:
