@@ -62,17 +62,17 @@ This post walks through both: the empirical benchmark, and the first-principles 
 
 ## The hardware: DGX Spark (GB10)
 
-| Spec                 | Value                                                              |
-| -------------------- | ------------------------------------------------------------------ |
-| GPU Architecture     | Blackwell, SM_121 [1]                                              |
-| CUDA Cores           | 6,144 [1]                                                          |
-| CPU                  | 20-core Arm (10× Cortex-X925 + 10× Cortex-A725) [1]                |
-| FP4 (Tensor, sparse) | 1,000 TOPS rated · ~480 TFLOPS measured [2][3]                     |
-| BF16 (Tensor)        | ~125 TFLOPS rated · ~60 TFLOPS measured [2][3]                     |
-| Memory               | 128 GB unified LPDDR5x, shared CPU+GPU [1]                         |
+| Spec                 | Value                                                          |
+| -------------------- | -------------------------------------------------------------- |
+| GPU Architecture     | Blackwell, SM_121 [1]                                          |
+| CUDA Cores           | 6,144 [1]                                                      |
+| CPU                  | 20-core Arm (10× Cortex-X925 + 10× Cortex-A725) [1]            |
+| FP4 (Tensor, sparse) | 1,000 TOPS rated · ~480 TFLOPS measured [2][3]                 |
+| BF16 (Tensor)        | ~125 TFLOPS rated · ~60 TFLOPS measured [2][3]                 |
+| Memory               | 128 GB unified LPDDR5x, shared CPU+GPU [1]                     |
 | Memory Bandwidth     | 273 GB/s nominal [1] · ~230 GB/s effective (fitted, see below) |
-| Power                | 140 W SoC TDP / 240 W system rated [2]                             |
-| Price                | £4,959.98 (Aug 2026, without discounts/promotions) [4]             |
+| Power                | 140 W SoC TDP / 240 W system rated [2]                         |
+| Price                | £4,959.98 (Aug 2026, without discounts/promotions) [4]         |
 
 For context, a single Blackwell GPU in NVIDIA's datacenter-class [GB200 Superchip](https://www.nvidia.com/en-us/data-center/gb200-nvl72/) has roughly 20–42× Spark's compute and ~29–35× its memory bandwidth (2,500 TFLOPS BF16, 8 TB/s HBM3e, per official specs) — but the compute:bandwidth _ratio_ that actually determines memory- vs. compute-bound behavior in a roofline model is surprisingly similar: ~312 FLOP/byte for GB200 vs. ~261 FLOP/byte for Spark using the measured figures above. The memory-bound story this whole post is built around isn't a quirk of small desktop machine — the same dynamic holds at full datacenter scale too.
 

@@ -8,3 +8,14 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: lychee
+        name: Check for broken links (lychee)
+        description: >
+          Same check as the "Check for broken links" GitHub Action, run locally.
+          Requires the lychee binary: `brew install lychee` or `cargo install lychee`.
+        entry: lychee --config lychee.toml --verbose
+        language: system
+        types_or: [markdown, html]
+        pass_filenames: true

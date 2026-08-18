@@ -48,8 +48,6 @@ jobs:
         uses: lycheeverse/lychee-action@v2.1.0
         with:
           fail: true
-          # removed md files that include liquid tags
-          # net_1/net_2 cross-link each other via ../net_1 / ../net_2, which only resolve correctly
-          # once Jekyll rewrites them to permalinks (/net_1/, /net_2/); checked properly against the
-          # built site by broken-links-site.yml instead, so just exclude these two literal paths here.
-          args: --user-agent 'curl/7.54' --exclude-path README.md --exclude-path _pages/404.md --exclude-path _pages/blog.md --exclude-path _posts/2018-12-22-distill.md --exclude-path _posts/2023-04-24-videos.md --exclude-path _books/the_godfather.md --exclude '/scale-ops/net_1$' --exclude '/scale-ops/net_2$' --verbose --no-progress './**/*.md' './**/*.html'
+          # exclusions and other options live in lychee.toml, shared with the local
+          # pre-commit hook (see .pre-commit-config.yaml) so both stay in sync.
+          args: --config lychee.toml --verbose './**/*.md' './**/*.html'
