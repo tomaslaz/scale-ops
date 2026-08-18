@@ -80,20 +80,6 @@
 
       <div class="collapse navbar-collapse text-right" id="navbarNav">
         <ul class="navbar-nav ml-auto flex-nowrap">
-          {% for page in site.pages %}
-            {% if page.permalink == '/' %} {% assign about_title = page.title %} {% endif %}
-          {% endfor %}
-
-          <!-- About -->
-          <li class="nav-item {% if page.permalink == '/' %}active{% endif %}">
-            <a class="nav-link" href="{{ '/' | relative_url }}">
-              {{- about_title }}
-              {% if page.permalink == '/' %}
-                <span class="sr-only">(current)</span>
-              {% endif %}
-            </a>
-          </li>
-
           <li class="nav-item nav-hidden"><a class="nav-link" onclick="goToTop()" id="top-button" style="display: none;">Back to Top</a></li>
 
           <li class="nav-item nav-hidden"><p class="nav-link"></p></li>
@@ -143,6 +129,14 @@
                         </a>
                       {% endif %}
                     {% endfor %}
+                    {% if p.dropdown_posts %}
+                      {% assign dropdown_sorted_posts = site.posts | sort: 'date' | reverse %}
+                      {% for post in dropdown_sorted_posts %}
+                        <a class="dropdown-item {% if page.title == post.title %}active{% endif %}" href="{{ post.url | relative_url }}">
+                          {{- post.title -}}
+                        </a>
+                      {% endfor %}
+                    {% endif %}
                   </div>
                 </li>
               {% else %}

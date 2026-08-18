@@ -1,4 +1,4 @@
-# How To Scale Your Model
+# Scale Ops
 
 ScaleOps is a repository dedicated to collecting and sharing findings from exploring and optimizing the scalability and performance of AI workloads.
 
