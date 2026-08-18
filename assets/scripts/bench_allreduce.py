@@ -96,7 +96,7 @@ def measure_allreduce_speed(tensor_size, experiments=10, calls=10, dtype="bfloat
         device (torch.device): The device to run the tensor on.
         local_rank (int): The local rank of the process.
     """
-    
+
     rank = dist.get_rank()
     world_size = dist.get_world_size()
 
@@ -128,22 +128,22 @@ def measure_allreduce_speed(tensor_size, experiments=10, calls=10, dtype="bfloat
 
     for exp_i in range(experiments):
         dist.barrier()
-        
+
         if rank == 0:
             logging.info(f"Experiment {exp_i + 1}/{experiments}...")
 
         # Measure computation time
         with torch.no_grad():
             comp_tensor = tensor.clone()
-            
+
             if device.type == 'cuda':
                 torch.cuda.synchronize()
-            
+
             comp_start = time.time()
             for _ in range(calls):
                 # Simulate element-wise reduction locally
                 comp_tensor += comp_tensor  # Or use appropriate reduction operation
-            
+
             if device.type == 'cuda':
                 torch.cuda.synchronize()
             comp_end = time.time()

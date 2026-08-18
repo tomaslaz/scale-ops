@@ -1,0 +1,29 @@
+# Shared lychee config for both the GitHub Action (.github/workflows/broken-links.yml)
+# and the local pre-commit hook (.pre-commit-config.yaml), so exclusions stay in sync.
+user_agent = "curl/7.54"
+no_progress = true
+
+# md files that include liquid tags, which lychee can't parse
+exclude_path = [
+  "README.md",
+  "_pages/404.md",
+  "_pages/blog.md",
+  "_posts/2018-12-22-distill.md",
+  "_posts/2023-04-24-videos.md",
+  "_books/the_godfather.md",
+]
+
+exclude = [
+  # net_1/net_2 cross-link each other via ../net_1 / ../net_2, which only resolve correctly
+  # once Jekyll rewrites them to permalinks (/net_1/, /net_2/); checked properly against the
+  # built site by broken-links-site.yml instead, so just exclude these two literal paths here.
+  '/scale-ops/net_1$',
+  '/scale-ops/net_2$',
+  # dl.acm.org/doi.org, scan.co.uk, and hpe.com all block automated/CI requests (403 or
+  # connection reset) regardless of user agent, even though the links resolve fine in a
+  # browser — exclude these known bot-blocking domains rather than treat them as broken.
+  'dl\.acm\.org',
+  'doi\.org',
+  'scan\.co\.uk',
+  'hpe\.com',
+]
