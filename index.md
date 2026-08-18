@@ -63,7 +63,8 @@ I hope that this repository will be a useful resource for anyone who is learning
 
 {% assign sorted_posts = group.items | sort: "date" | reverse %}
 {% for post in sorted_posts %}
-- [**{{ post.title }}**]({{ post.url | relative_url }}) *({{ post.date | date: "%Y-%m-%d" }})* {{ post.description }}
+
+- [**{{ post.title }}**]({{ post.url | relative_url }}) _({{ post.date | date: "%Y-%m-%d" }})_ {{ post.description }}
 
 {% endfor %}
 {% endfor %}
