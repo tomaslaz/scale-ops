@@ -12,9 +12,7 @@ hidden: false
 giscus_comments: false
 
 authors:
-  - name: Tomas Lazauskas
-    affiliations:
-      name: The Alan Turing Institute
+  - name: Tomas
 
 toc:
   - name: Abstract

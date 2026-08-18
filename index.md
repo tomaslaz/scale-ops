@@ -3,8 +3,6 @@ layout: distill
 title: "Scale Ops"
 subtitle: "Exploring how AI models scale"
 description: "ScaleOps is a repository dedicated to collecting and sharing findings from exploring and optimizing the scalability and performance of AI workloads."
-date: 2025-03-14
-update: 2025-03-17
 future: true
 htmlwidgets: true
 hidden: false
@@ -22,9 +20,6 @@ giscus_comments: false
 # bibliography: main.bib
 
 # citation: true
-
-authors:
-  - name: Tomas
 
 # Add a table of contents to your post.
 #   - make sure that TOC names match the actual section names
