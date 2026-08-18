@@ -16,7 +16,18 @@ ninja.data = [{
               handler: () => {
                 window.location.href = "/scale-ops/index";
               },
-            },{id: "post-performance-characterisation-of-anemoi-training-on-isambard-ai",
+            },{id: "post-first-principles-vs-reality-dense-vs-moe-qwen3-6-on-a-dgx-spark",
+      
+        title: "First Principles vs. Reality: Dense vs. MoE Qwen3.6 on a DGX Spark",
+      
+      description: "A roofline model built purely from published hardware specs and model architecture predicts real vLLM throughput on a DGX Spark to within ~5%, explaining why MoE&#39;s real advantage over dense is 4.2x (not the naive 9x) and why neither model can profitably serve inference on a single box.",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/scale-ops/dgx_spark_dense_vs_moe/";
+        
+      },
+    },{id: "post-performance-characterisation-of-anemoi-training-on-isambard-ai",
       
         title: "Performance Characterisation of Anemoi Training on Isambard-AI",
       
